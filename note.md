@@ -60,6 +60,8 @@
   - [零钱兑换](#零钱兑换)
   - [编辑距离](#编辑距离)
 - [有序表](#有序表)
+- [AC自动机](#ac自动机)
+  - [字符流问题](#字符流问题)
 
 
 
@@ -3236,3 +3238,141 @@ class Solution:
 左旋右旋操作可以提高树的平衡性。
 
 跳表：对于每一个数据随机生成一定层数的索引（层高的概率为0.5的层高次方，即层级越高的索引产生的概率越小），跳表查询时从最高层开始，利用高层索引可以快速跳过大量数据（最底层索引存储数据），大大提高查询速度。跳表结构有点类似于二叉树结构，只不过用随机产生索引的概率来代替二叉树的分叉结构。跳表各操作的时间复杂度为$O(logN)$
+
+# AC自动机
+1.  以 Trie 的结构为基础，结合 KMP 的思想 建立的自动机，用于解决多模式匹配等任务。
+2.  基础的 Trie 结构：将所有的模式串构成一棵 Trie。
+3.  KMP 的思想：对 Trie 树上所有的结点构造失配指针，失配指针指向当前状态的最长后缀状态。
+## 字符流问题
+设计一个算法：接收一个字符流，并检查这些字符的后缀是否是字符串数组 words 中的一个字符串。
+```
+class TrieNode:
+    def __init__(self):
+
+        self.children = [None] * 26 # 这里更通用的做法是构建一个字典
+        self.isEnd = False
+        self.fail = None
+
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
+    
+    def insert(self, seq: str):
+        cur = self.root
+        for char in seq:
+            idx = ord(char) - ord("a")
+            if not cur.children[idx]: # 这里一定要判断，之前没有才能新建，不然将之前的覆盖掉，树结构就破坏了
+                cur.children[idx] = TrieNode()
+            cur = cur.children[idx]
+        cur.isEnd = True
+
+
+class StreamChecker:
+
+    def __init__(self, words: List[str]):
+
+        # 初始化Trie树
+        self.Trie = Trie()
+        for word in set(words):
+            self.Trie.insert(word)
+        
+        # 确定fail指针
+        self.Trie.root.fail = self.Trie.root
+        q = deque()
+        for i in range(26):
+            if self.Trie.root.children[i]:
+                self.Trie.root.children[i].fail = self.Trie.root
+                q.append(self.Trie.root.children[i])
+            else:
+                self.Trie.root.children[i] = self.Trie.root # 父节点下沉，路径压缩
+        
+        while q:
+            node = q.popleft()
+
+            # 当自己或者自己的某一个后缀能匹配字符串时为true，query路径压缩
+            node.isEnd = node.isEnd or node.fail.isEnd
+            
+            for i in range(26):
+                if node.children[i]:
+                    node.children[i].fail = node.fail.children[i]
+                    q.append(node.children[i])
+                else:
+                    node.children[i] = node.fail.children[i] # 路径压缩
+        
+        # 初始化当前节点
+        self.tmp = self.Trie.root
+        
+
+    def query(self, letter: str) -> bool:
+        self.tmp = self.tmp.children[ord(letter) - ord("a")]
+        return self.tmp.isEnd
+        
+# Your StreamChecker object will be instantiated and called as such:
+# obj = StreamChecker(words)
+# param_1 = obj.query(letter)
+```
+时间复杂度：$O(L+q)$-$L$是构建Trie树的时间复杂度，$q$是查询的时间复杂度；
+空间复杂度：$O(L)$，存储Trie树。
+但是上面的分析没有考虑词表的大小，英文只有26个字母但中文词表太大，所以复杂度更高，且这种方法的适用范围比较小，更普适的方法是将next换成字典结构，如下：
+```
+class TrieNode():
+    def __init__(self):
+        self.next = {} # {"a": TrieNode()}
+        self.isEnd = False
+        self.word = None
+        self.fail = None
+
+class Trie():
+    def __init__(self):
+        self.root = TrieNode()
+    
+    def insert(self, word: str):
+        cur = self.root
+        for char in word:
+            if not cur.next.get(char, None):
+                cur.next[char] = TrieNode()
+            cur = cur.next[char]
+        cur.isEnd = True
+        cur.word = word
+
+class StreamChecker:
+
+    def __init__(self, words: List[str]):
+        self.trie = Trie()
+        for word in words:
+            self.trie.insert(word)
+        
+        q = deque()
+        for name, child in self.trie.root.next.items():
+            child.fail = self.trie.root
+            q.append(child)
+        
+        while q:
+            node = q.popleft()
+            node.isEnd = node.isEnd or node.fail.isEnd
+
+            for name, child in node.next.items():
+                parent = node
+                while parent.fail and not parent.fail.next.get(name, None):
+                    parent = parent.fail
+                
+                child.fail = parent.fail.next[name] if parent.fail else self.trie.root
+                q.append(child)
+
+        self.tmp = self.trie.root
+
+    def query(self, letter: str) -> bool:
+        if self.tmp.next.get(letter, None):
+            self.tmp = self.tmp.next[letter]
+            return self.tmp.isEnd
+        
+        parent = self.tmp
+        while parent.fail and not parent.fail.next.get(letter, None):
+            parent = parent.fail
+        self.tmp = parent.fail.next[letter] if parent.fail else self.trie.root
+        if self.tmp.isEnd:
+            print(self.tmp.word)
+        return self.tmp.isEnd
+
+```
+这种方法适用性更广，不需要遍历整个可选字符空间，但是在fail指针确定时开销可能更大（宽度小深度大），适用于关键词等匹配

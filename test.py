@@ -63,6 +63,71 @@ class Solution:
             m -= 1
         return operations[::-1]
 
+from typing import *
+from collections import deque
+class TrieNode():
+    def __init__(self):
+        self.next = {} # {"a": TrieNode()}
+        self.isEnd = False
+        self.word = None
+        self.fail = None
+
+class Trie():
+    def __init__(self):
+        self.root = TrieNode()
+    
+    def insert(self, word: str):
+        cur = self.root
+        for char in word:
+            if not cur.next.get(char, None):
+                cur.next[char] = TrieNode()
+            cur = cur.next[char]
+        cur.isEnd = True
+        cur.word = word
+
+class StreamChecker:
+
+    def __init__(self, words: List[str]):
+        self.trie = Trie()
+        for word in words:
+            self.trie.insert(word)
+        
+        q = deque()
+        for name, child in self.trie.root.next.items():
+            child.fail = self.trie.root
+            q.append(child)
+        
+        while q:
+            node = q.popleft()
+            node.isEnd = node.isEnd or node.fail.isEnd
+
+            for name, child in node.next.items():
+                parent = node
+                while parent.fail and not parent.fail.next.get(name, None):
+                    parent = parent.fail
+                
+                child.fail = parent.fail.next[name] if parent.fail else self.trie.root
+                q.append(child)
+
+        self.tmp = self.trie.root
+
+    def query(self, letter: str) -> bool:
+        if self.tmp.next.get(letter, None):
+            self.tmp = self.tmp.next[letter]
+            return self.tmp.word
+        
+        parent = self.tmp
+        while parent.fail and not parent.fail.next.get(letter, None):
+            parent = parent.fail
+        self.tmp = parent.fail.next[letter] if parent.fail else self.trie.root
+
+        return self.tmp.word
+
 if __name__ == "__main__":
-    s = Solution()
-    s.backtrackingPath("horse", "ros")
+    words = ["学姐", "漂亮", "有点懒", "很馋"]
+    checker = StreamChecker(words=words)
+    sent = "漂亮学姐不仅有点懒，还很馋"
+    for index, char in enumerate(sent):
+        word = checker.query(char)
+        if word:
+            print(index - len(word) + 1, word)

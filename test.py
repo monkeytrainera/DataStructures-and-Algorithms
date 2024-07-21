@@ -123,6 +123,99 @@ class StreamChecker:
 
         return self.tmp.word
 
+
+class TreeNode():
+    def __init__(self, val: int) -> None:
+        self.val = val
+        self.left = None
+        self.right = None
+
+class BST:
+    def __init__(self) -> None:
+        self._root = None
+
+    def search(self, num: int) -> bool:
+        """查询搜索二叉树中是否存在num
+        args:
+            num: 需要查询的数字
+        
+        return:
+            bool: 是否存在
+        """
+
+        cur = self._root
+        while cur is not None:
+            if cur.val < num:
+                cur = cur.right
+            elif cur.val > num:
+                cur = cur.left
+            else:
+                break
+        return cur is not None
+    
+    def insert(self, num: int) -> None:
+        """将num插入到搜索二叉树中
+        """
+        
+        if self._root is None:
+            self._root = TreeNode(num)
+            return
+        
+        cur, pre = self._root, None
+        while cur is not None:
+            if cur.val == num:
+                return
+            
+            pre = cur
+            if cur.val < num:
+                cur = cur.right
+            else:
+                cur = cur.left
+        node = TreeNode(num)
+        if pre.val < num:
+            pre.right = node
+        else:
+            pre.left = node
+        return
+    
+    def remove(self, num: int):
+        """删除节点"""
+        
+        if self._root is None:
+            return
+        cur, pre = self._root, None
+        while cur is not None:
+            if cur.val == num:
+                break
+            pre = cur
+            if cur.val > num:
+                cur = cur.left
+            else:
+                cur = cur.right
+        if cur is None:
+            return
+        
+        # 子节点数量小于2
+        if cur.left is None or cur.right is None:
+            child = cur.left or cur.right
+            if cur != self._root:
+                if pre.left == cur:
+                    pre.left = child
+                else:
+                    pre.right = child
+        
+            else:
+                self._root = child
+        
+        # 子节点数等于2
+        else:
+            tmp = TreeNode(cur.right)
+            while tmp.left is not None:
+                tmp = tmp.left
+            
+
+
+
 if __name__ == "__main__":
     words = ["学姐", "漂亮", "有点懒", "很馋"]
     checker = StreamChecker(words=words)

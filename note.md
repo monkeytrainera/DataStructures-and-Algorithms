@@ -60,6 +60,8 @@
   - [零钱兑换](#零钱兑换)
   - [编辑距离](#编辑距离)
 - [有序表](#有序表)
+  - [搜索二叉树实现](#搜索二叉树实现)
+  - [AVL树实现](#avl树实现)
 - [AC自动机](#ac自动机)
   - [字符流问题](#字符流问题)
 
@@ -3234,6 +3236,103 @@ class Solution:
 
 有序表所有操作时间复杂度都是$O(logN)$。可以实现有序表的结构：红黑树、AVL、SB（size balance tree）、跳表（skiplist）。其中前三种的实现都是以搜索二叉树为基础的，同时考虑了平衡性（左右子树高度差限制）。
 
+## 搜索二叉树实现
+```
+class TreeNode():
+    def __init__(self, val: int) -> None:
+        self.val = val
+        self.left = None
+        self.right = None
+
+class BST:
+    def __init__(self) -> None:
+        self._root = None
+
+    def search(self, num: int) -> bool:
+        """查询搜索二叉树中是否存在num
+        args:
+            num: 需要查询的数字
+        
+        return:
+            bool: 是否存在
+        """
+
+        cur = self._root
+        while cur is not None:
+            if cur.val < num:
+                cur = cur.right
+            elif cur.val > num:
+                cur = cur.left
+            else:
+                break
+        return cur is not None
+    
+    def insert(self, num: int) -> None:
+        """将num插入到搜索二叉树中
+        """
+        
+        if self._root is None:
+            self._root = TreeNode(num)
+            return
+        
+        cur, pre = self._root, None
+        while cur is not None:
+            if cur.val == num:
+                return
+            
+            pre = cur
+            if cur.val < num:
+                cur = cur.right
+            else:
+                cur = cur.left
+        node = TreeNode(num)
+        if pre.val < num:
+            pre.right = node
+        else:
+            pre.left = node
+        return
+    
+    def remove(self, num: int):
+        """删除节点"""
+        
+        if self._root is None:
+            return
+        cur, pre = self._root, None
+        while cur is not None:
+            if cur.val == num:
+                break
+            pre = cur
+            if cur.val > num:
+                cur = cur.left
+            else:
+                cur = cur.right
+        if cur is None:
+            return
+        
+        # 子节点数量小于2
+        if cur.left is None or cur.right is None:
+            child = cur.left or cur.right
+            if cur != self._root:
+                if pre.left == cur:
+                    pre.left = child
+                else:
+                    pre.right = child
+        
+            else:
+                self._root = child
+        
+        # 子节点数等于2
+        else:
+            tmp = TreeNode(cur.right)
+            while tmp.left is not None:
+                tmp = tmp.left
+            
+            # 递归删除节点tmp
+            self.remove(tmp.val)
+            cur.val = tmp.val
+
+```
+
 搜索二叉树+搜索二叉树的左旋和右旋——>带有自平衡操作的搜索二叉树——>AVL、红黑树、SB树
 
 搜索二叉树的左旋：头节点右子节点作为新的头节点
@@ -3241,6 +3340,11 @@ class Solution:
 搜索二叉树的右旋：头节点左子节点作为新的头节点
 
 左旋右旋操作可以提高树的平衡性。
+
+## AVL树实现
+```
+
+```
 
 跳表：对于每一个数据随机生成一定层数的索引（层高的概率为0.5的层高次方，即层级越高的索引产生的概率越小），跳表查询时从最高层开始，利用高层索引可以快速跳过大量数据（最底层索引存储数据），大大提高查询速度。跳表结构有点类似于二叉树结构，只不过用随机产生索引的概率来代替二叉树的分叉结构。跳表各操作的时间复杂度为$O(logN)$
 

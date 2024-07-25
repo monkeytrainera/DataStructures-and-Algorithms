@@ -123,7 +123,7 @@ class StreamChecker:
 
         return self.tmp.word
 
-
+# 搜索二叉树
 class TreeNode():
     def __init__(self, val: int) -> None:
         self.val = val
@@ -181,6 +181,7 @@ class BST:
     def remove(self, num: int):
         """删除节点"""
         
+        # 先找，找不到直接返回
         if self._root is None:
             return
         cur, pre = self._root, None
@@ -195,7 +196,7 @@ class BST:
         if cur is None:
             return
         
-        # 子节点数量小于2
+        # 子节点数量小于2，平替即可
         if cur.left is None or cur.right is None:
             child = cur.left or cur.right
             if cur != self._root:
@@ -207,13 +208,166 @@ class BST:
             else:
                 self._root = child
         
-        # 子节点数等于2
+        # 子节点数等于2，找到中序遍历的后继节点，删除后继节点并将后继节点的值覆盖当前节点。
         else:
-            tmp = TreeNode(cur.right)
+            tmp = cur.right
             while tmp.left is not None:
                 tmp = tmp.left
             
+            # 递归删除节点tmp
+            self.remove(tmp.val)
+            cur.val = tmp.val
 
+            
+class TreeNode:
+    def __init__(self, val: int) -> None:
+        self.val: int = val
+        self.height: int = 0
+        self.left: TreeNode | None = None
+        self.right: TreeNode | None = None
+
+class AVL:
+    def __init__(self) -> None:
+        self._root = None
+
+    def height(self, node: TreeNode) -> int:
+        """获取节点的树高"""
+
+        if node is not None:
+            return node.height
+        return -1
+    
+    def update_height(self, node: TreeNode):
+        """更新节点树高"""
+
+        node.height = max(self.height(node.left), self.height(node.right))
+
+    def balance_factor(self, node: TreeNode) -> int:
+        """获取节点平衡因子"""
+
+        if node is None:
+            return 0
+        return self.height(node.left) - self.height(node.right)
+    
+    def right_rotate(self, node: TreeNode | None) -> TreeNode | None:
+        """右旋"""
+
+        child = node.left
+        grand_child = child.right
+
+        # 以child为原点，将node右旋
+        child.right = node
+        node.left = grand_child
+
+        self.update_height(node)
+        self.update_height(child)
+
+        return child
+    
+    def left_rotate(self, node: TreeNode|None) -> TreeNode|None:
+        """左旋"""
+
+        child = node.right
+        grand_child = child.left
+
+        child.left = node
+        node.right = grand_child
+
+        self.update_height(node)
+        self.update_height(child)
+        
+        return child
+    
+    def rotate(self, node: TreeNode|None) -> TreeNode|None:
+        """旋转实现自平衡"""
+
+        balance_factor = self.balance_factor(node)
+
+        # 左偏树
+        if balance_factor > 1:
+            if self.balance_factor(node.left) >= 0:
+                return self.right_rotate(node)
+            else:
+                node.left = self.left_rotate(node.left)
+                return self.right_rotate(node)
+        
+        # 右偏树
+        elif balance_factor < -1:
+            if self.balance_factor(node.right) <= 0:
+                return self.left_rotate(node)
+            else:
+                node.right = self.right_rotate(node.right)
+                return self.left_rotate(node)
+        
+        # 无偏树 
+        return node
+    
+    def insert_helper(self, node: TreeNode|None, val: int) -> TreeNode:
+        if node is None:
+            return TreeNode(val)
+        if val < node.val:
+            node.left = self.insert_helper(node.left, val)
+        elif val > node.val:
+            node.right = self.insert_helper(node.right, val)
+        else:
+            return node
+        
+        self.update_height(node)
+        return self.rotate(node)
+    
+    def insert(self, val: int):
+        """插入节点"""
+        self._root = self.insert_helper(self._root, val)
+
+    def remove_helper(self, node: TreeNode|None, val: int) -> TreeNode|None:
+        if node is None:
+            return None
+        if val < node.val:
+            node.left = self.remove_helper(node.left, val)
+        elif val > node.val:
+            node.right = self.remove_helper(node.right, val)
+
+        else:
+            if node.left is None or node.right is None:
+                child = node.left or node.right
+                if child is None:
+                    return None
+                else:
+                    node = child
+            else:
+                tmp = node.right
+                while tmp.left is not None:
+                    tmp = tmp.left
+                node.right = self.remove_helper(node.right, val)
+                node.val = tmp.val
+        self.update_height(node)
+        return self.rotate(node)
+    
+    def remove(self, val: int):
+        self._root = self.remove_helper(self._root, val)
+    
+    def search(self, num: int) -> bool:
+        """查询搜索二叉树中是否存在num
+        args:
+            num: 需要查询的数字
+        
+        return:
+            bool: 是否存在
+        """
+
+        cur = self._root
+        while cur is not None:
+            if cur.val < num:
+                cur = cur.right
+            elif cur.val > num:
+                cur = cur.left
+            else:
+                break
+        return cur is not None
+        
+
+        
+    
 
 
 if __name__ == "__main__":

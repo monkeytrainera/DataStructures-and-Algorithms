@@ -59,6 +59,7 @@
   - [下象棋问题](#下象棋问题)
   - [零钱兑换](#零钱兑换)
   - [编辑距离](#编辑距离)
+  - [有效括号](#有效括号)
 - [有序表](#有序表)
   - [搜索二叉树实现](#搜索二叉树实现)
   - [AVL树实现](#avl树实现)
@@ -3229,6 +3230,120 @@ class Solution:
 
 
 
+
+
+
+## 有效括号
+给你一个只包含 '(' 和 ')' 的字符串，找出最长有效（格式正确且连续）括号 子串 的长度。
+
+注意：有效的定义是**格式正确且连续**。如“（）（（）”最长为3，因为中间不连续。
+
+解法一：动态规划
+```python
+class Solution:
+    def longestValidParentheses(self, s: str) -> int:
+        # 动态规划
+        if not s:
+            return 0
+        
+        dp = [0 for _ in s] # 以dp[i] 代表 以s[i]的最长连续有效括号的长度
+        if s[:2] == "()":
+            dp[1] = 2
+        
+        for i in range(2, len(s)):
+            
+            if s[i] == "(":
+                dp[i] = 0 # 以“（”结尾不满足“格式正确”
+            
+            else:
+                # 与前一个“（”匹配，相当于多一组括号“（）”，直接加2
+                if s[i - 1] == "(":
+                    dp[i] = dp[i - 2] + 2
+                
+                # 否则，需要判断前面子串的前一个是否是“（”。前面子串的长度为dp[i - 1]
+                # 因此前面子串的前一个的下标为i - dp[i - 1] - 1
+                # "()(())", "())())"
+                else:
+                    
+                    # 先判断是否越界
+                    if i - dp[i - 1] - 1 < 0:
+                        dp[i] = 0
+                    
+                    # 判断是否匹配，如果匹配，说明当前连续括号的长度为dp[i - 1] + 2
+                    # 注意还要加上前面的连续括号长度 dp[i - dp[i - 1] - 2]
+                    # 例如 "()(（)）"，i=5时，dp[i - 1] = 2, dp[i - dp[i - 1] - 2] = 2
+                    elif s[i - dp[i - 1] - 1] == "(": 
+                        dp[i] = 2 + dp[i - 1] + dp[i - dp[i - 1] - 2]
+                    
+                    # 不匹配清零
+                    else:
+                        dp[i] = 0
+        return max(dp)
+```
+时间复杂度和空间复杂度都是$O(n)$
+
+方法二：栈
+
+核心思想：“每一段子串都是以‘）’结尾的”，将前一段字串末尾的“）”的下标作为栈底，不断更新最大长度。
+```python
+class Solution:
+    def longestValidParentheses(self, s: str) -> int:
+        
+        max_len = 0
+        stack = [-1] # 最左边补一个“）”
+        for i in range(len(s)):
+
+            # 遇到“（”就往栈里加一个下标
+            if s[i] == "(":
+                stack.append(i)
+            else:
+                stack.pop()
+
+                # 如果pop出去的是“（”，说明匹配成一对括号，此时需要计算一下长度。现在栈底肯定还有一个“）”，栈不为空。
+                if stack:
+                    max_len = max(max_len, i - stack[-1])
+                
+                # 如果pop出去的是栈底的“）”，说明匹配括号失败，当前子段结束，将栈底更新成当前“）”的下标
+                else:
+                    stack.append(i)
+
+        return max_len
+```
+时间复杂度和空间复杂度都是$O(n)$
+
+方法三：左右计数器
+
+思路：顺序遍历字符串，左右括号计数，相等则更新最大长度，右括号大则归零。倒序再来一遍，解决“（（）”。
+```python
+class Solution:
+    def longestValidParentheses(self, s: str) -> int:
+
+        max_len = 0
+        left, right = 0, 0
+        
+        for char in s:
+            if char == "(":
+                left += 1
+            else:
+                right += 1
+            if left == right:
+                max_len = max(max_len, left)
+            if left < right:
+                left, right = 0, 0
+        
+        left, right = 0, 0
+        for char in s[::-1]:
+            if char == ")":
+                right += 1
+            else:
+                left += 1
+            if left == right:
+                max_len = max(max_len, left)
+            if left > right:
+                left, right = 0, 0
+        return max_len * 2
+```
+时间复杂度为$O(n)$，空间复杂度为$O(1)$。
 
 # 有序表
 

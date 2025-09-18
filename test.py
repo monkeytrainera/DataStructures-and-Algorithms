@@ -1,3 +1,11 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+from typing import *
+from collections import deque
+from transformers.models
+# 编辑操作
 class Solution:
     def minDistance(self, word1: str, word2: str) -> int:
         """
@@ -63,8 +71,8 @@ class Solution:
             m -= 1
         return operations[::-1]
 
-from typing import *
-from collections import deque
+
+# 字符流
 class TrieNode():
     def __init__(self):
         self.next = {} # {"a": TrieNode()}
@@ -122,6 +130,7 @@ class StreamChecker:
         self.tmp = parent.fail.next[letter] if parent.fail else self.trie.root
 
         return self.tmp.word
+
 
 # 搜索二叉树
 class TreeNode():
@@ -217,8 +226,7 @@ class BST:
             # 递归删除节点tmp
             self.remove(tmp.val)
             cur.val = tmp.val
-
-            
+          
 class TreeNode:
     def __init__(self, val: int) -> None:
         self.val: int = val
@@ -366,15 +374,23 @@ class AVL:
         return cur is not None
         
 
-        
-    
-
 
 if __name__ == "__main__":
-    words = ["学姐", "漂亮", "有点懒", "很馋"]
-    checker = StreamChecker(words=words)
-    sent = "漂亮学姐不仅有点懒，还很馋"
-    for index, char in enumerate(sent):
-        word = checker.query(char)
-        if word:
-            print(index - len(word) + 1, word)
+    # words = ["学姐", "漂亮", "有点懒", "很馋"]
+    # checker = StreamChecker(words=words)
+    # sent = "漂亮学姐不仅有点懒，还很馋"
+    # for index, char in enumerate(sent):
+    #     word = checker.query(char)
+    #     if word:
+    #         print(index - len(word) + 1, word)
+    
+    # (bs, head, seq_len, dk)
+    q = torch.randn((8, 12, 10, 32))
+    k = torch.randn((8, 12, 10, 32))
+    v = torch.randn((8, 12, 10, 32))
+    rope = Qwen2RotaryEmbedding(dim=64)
+    res, att_scores = rope.apply_rotary_pos_emb(q, k, v, mask=None, dropout=None, use_RoPE=True)
+
+
+    # (bs, head, seq_len, dk),  (bs, head, seq_len, seq_len)
+    print(res.shape, att_scores.shape)
